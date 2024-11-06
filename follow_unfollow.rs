@@ -4,8 +4,6 @@ extern crate serde_json;
 
 use std::env;
 use std::collections::HashSet;
-use std::thread::sleep;
-use std::time::Duration;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use serde_json::Value;
 
@@ -79,7 +77,95 @@ async fn get_followers(github_username: &str) -> HashSet<String> {
     followers
 }
 
-// The rest of the code remains unchanged...
+async fn follow_user(user: &str, headers: &HeaderMap<HeaderValue>, retries: u8) -> bool {
+    let follow_url = format!("https://api.github.com/user/following/{}", user);
+
+    for _ in 0..retries {
+        let client = reqwest::Client::new();
+        let response = client.put(&follow_url).headers(headers.clone()).send().await.unwrap();
+
+        if response.status().is_success() {
+            return true;
+        } else if response.status().as_u16() == 403 {
+            println!("Rate limit hit. Waiting before retrying...");
+            tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        } else {
+            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+        }
+    }
+
+    false
+}
+
+async fn follow_all_followers(github_username: &str, headers: &HeaderMap<HeaderValue>) {
+    let following = get_following(github_username).await;
+    let followers = get_followers(github_username).await;
+    let non_following: HashSet<_> = followers.difference(&following).collect();
+
+    if non_following.is_empty() {
+        println!("No one Left to follow back");
+        return;
+    }
+
+    println!("\n{} are left to follow back\n", non_following.len());
+    println!("\nList of non-followers:\n");
+
+    for (i, user) in non_following.iter().enumerate() {
+        if follow_user(user, headers, 3).await {
+            println!("{}. Followed {}.", i + 1, user);
+        } else {
+            println!("{}. Failed to follow {}.", i + 1, user);
+        }
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+    }
+
+    println!("\nFinished processing all non-following.");
+}
+
+async fn unfollow_user(user: &str, headers: &HeaderMap<HeaderValue>, retries: u8) -> bool {
+    let unfollow_url = format!("https://api.github.com/user/following/{}", user);
+
+    for _ in 0..retries {
+        let client = reqwest::Client::new();
+        let response = client.delete(&unfollow_url).headers(headers.clone()).send().await.unwrap();
+
+        if response.status().is_success() {
+            return true;
+        } else if response.status().as_u16() == 403 {
+            println!("Rate limit hit. Waiting before retrying...");
+            tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        } else {
+            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+        }
+    }
+
+    false
+}
+
+async fn find_and_unfollow_non_followers(github_username: &str, headers: &HeaderMap<HeaderValue>) {
+    let following = get_following(github_username).await;
+    let followers = get_followers(github_username).await;
+    let non_followers: HashSet<_> = following.difference(&followers).collect();
+
+    if non_followers.is_empty() {
+        println!("You don't follow anyone who doesn't follow you back.");
+        return;
+    }
+
+    println!("\nYou follow {} people who don't follow you back.", non_followers.len());
+    println!("\nList of non-followers:\n");
+
+    for (i, user) in non_followers.iter().enumerate() {
+        if unfollow_user(user, headers, 3).await {
+            println!("{}. Unfollowed {}.", i + 1, user);
+        } else {
+            println!("{}. Failed to unfollow {}.", i + 1, user);
+        }
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+    }
+
+    println!("\nFinished processing all non-followers.");
+}
 
 #[tokio::main]
 async fn main() {
