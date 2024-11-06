@@ -26,4 +26,4 @@ jobs:
       env:
         TOKEN: ${{ secrets.TOKEN }}
         USERNAME: ${{ secrets.USERNAME }}
-      run: cargo run --bin follow_unfollow.rs
+      run: cargo run --bin follow_unfollow
