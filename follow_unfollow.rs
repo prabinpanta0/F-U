@@ -9,13 +9,17 @@ use std::time::Duration;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use serde_json::Value;
 
-async fn get_following(github_username: &str, headers: &HeaderMap<HeaderValue>) -> HashSet<String> {
+async fn get_following(github_username: &str) -> HashSet<String> {
     let mut following = HashSet::new();
     let mut page = 1;
 
     loop {
         let url = format!("https://api.github.com/users/{}/following?per_page=100&page={}", github_username, page);
-        let response = reqwest::get(&url).await.unwrap().json::<Value>().await.unwrap();
+        let response = reqwest::get(&url).await.unwrap_or_else(|_| {
+            panic!("Failed to fetch following list for user: {}", github_username)
+        }).json::<Value>().await.unwrap_or_else(|_| {
+            panic!("Failed to decode following list for user: {}", github_username)
+        });
 
         if response.as_array().unwrap().is_empty() {
             break;
@@ -31,13 +35,17 @@ async fn get_following(github_username: &str, headers: &HeaderMap<HeaderValue>) 
     following
 }
 
-async fn get_followers(github_username: &str, headers: &HeaderMap<HeaderValue>) -> HashSet<String> {
+async fn get_followers(github_username: &str) -> HashSet<String> {
     let mut followers = HashSet::new();
     let mut page = 1;
 
     loop {
         let url = format!("https://api.github.com/users/{}/followers?per_page=100&page={}", github_username, page);
-        let response = reqwest::get(&url).await.unwrap().json::<Value>().await.unwrap();
+        let response = reqwest::get(&url).await.unwrap_or_else(|_| {
+            panic!("Failed to fetch followers list for user: {}", github_username)
+        }).json::<Value>().await.unwrap_or_else(|_| {
+            panic!("Failed to decode followers list for user: {}", github_username)
+        });
 
         if response.as_array().unwrap().is_empty() {
             break;
@@ -74,8 +82,8 @@ async fn follow_user(user: &str, headers: &HeaderMap<HeaderValue>, retries: u8) 
 }
 
 async fn follow_all_followers(github_username: &str, headers: &HeaderMap<HeaderValue>) {
-    let following = get_following(github_username, headers).await;
-    let followers = get_followers(github_username, headers).await;
+    let following = get_following(github_username).await;
+    let followers = get_followers(github_username).await;
     let non_following: HashSet<_> = followers.difference(&following).collect();
 
     if non_following.is_empty() {
@@ -119,8 +127,8 @@ async fn unfollow_user(user: &str, headers: &HeaderMap<HeaderValue>, retries: u8
 }
 
 async fn find_and_unfollow_non_followers(github_username: &str, headers: &HeaderMap<HeaderValue>) {
-    let following = get_following(github_username, headers).await;
-    let followers = get_followers(github_username, headers).await;
+    let following = get_following(github_username).await;
+    let followers = get_followers(github_username).await;
     let non_followers: HashSet<_> = following.difference(&followers).collect();
 
     if non_followers.is_empty() {
