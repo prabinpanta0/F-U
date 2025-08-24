@@ -28,6 +28,6 @@ jobs:
         TOKEN: ${{ secrets.TOKEN }}
         USERNAME: ${{ secrets.USERNAME }}
         DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
-        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        # EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+        # EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
       run: python follow_unfollow.py
