@@ -1,13 +1,9 @@
-name: Follow Unfollow Automation with Network Visualization
+name: Follow Unfollow Automation
+# code
 on:
   schedule:
-    - cron: '30 18 * * *'  # Runs at 6:30 PM UTC every day
+    - cron: '30 18 * * *'
   workflow_dispatch:  # Allows manual triggering
-
-# Explicitly define permissions needed for the workflow
-permissions:
-  contents: write  # Needed to push to the repository
-  pull-requests: read  # Optional: only needed if you work with PRs
 
 jobs:
   follow-unfollow:
@@ -16,10 +12,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-      with:
-        fetch-depth: 0  # Full history for commits
-        token: ${{ secrets.GITHUB_TOKEN }}
-        persist-credentials: true
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -29,42 +21,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests matplotlib networkx pandas pillow plotly
-
-    - name: Generate Network Visualization
-      env:
-        TOKEN: ${{ secrets.TOKEN }}
-        USERNAME: ${{ secrets.USERNAME }}
-      run: |
-        # Create directories if they don't exist
-        mkdir -p network_data
-        mkdir -p visualizations
-        
-        # Run the network visualization script
-        python network_visualization.py
-      continue-on-error: true  # Continue even if visualization fails
+        pip install requests
 
     - name: Run follow_unfollow.py
       env:
         TOKEN: ${{ secrets.TOKEN }}
         USERNAME: ${{ secrets.USERNAME }}
         DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        # EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+        # EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
       run: python follow_unfollow.py
-
-    - name: Commit and push visualization
-      run: |
-        # Configure git
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        
-        # Check for changes in visualization files
-        git add network_data visualizations || true
-        
-        # Commit only if there are changes
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update network visualization [skip ci]")
-        
-    - name: Push changes
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref }}
