@@ -20,6 +20,7 @@
 │ ✅ Auto-unfollow those who don't follow back │
 │ ✅ Discord notifications with JSON reports   │
 │ ✅ Scheduled daily checks                    │
+│ ✅ Network visualization of your followers   │
 └──────────────────────────────────────────────┘
 ```
 </div>
@@ -42,6 +43,8 @@ git clone https://github.com/prabinpanta0/F-U.git && cd F-U
 2️⃣ **Install dependencies**
 ```bash
 pip install -r requirements.txt
+# For network visualization you'll need these additional packages:
+pip install matplotlib networkx pandas pillow plotly
 ```
 
 3️⃣ **Configure environment**
@@ -69,7 +72,32 @@ crontab -e
 0 0 * * * /usr/bin/python3 /path/to/F-U/follow_unfollow.py
 ```
 
-## 📊 Notifications
+### GitHub Actions Workflow
+
+The repository includes a GitHub Actions workflow that automatically:
+- Runs on a daily schedule
+- Generates network visualizations of your GitHub connections
+- Follows/unfollows users based on your settings
+- Saves visualization history in the repository
+
+To use this feature:
+1. Fork this repository
+2. Set up repository secrets (`TOKEN`, `USERNAME`, `DISCORD_WEBHOOK_URL`)
+3. Enable GitHub Actions on your fork
+4. The workflow will create visualizations in the `visualizations/` directory
+
+## 📊 Network Visualization
+
+The tool generates interactive and static visualizations of your GitHub network:
+
+- **Summary Image**: Key metrics about your follower network
+- **Interactive HTML Graph**: Explore connections with hover effects
+- **Static Network Graph**: Visual representation of your network
+- **CSV Data**: Historical data of your network growth
+
+Images and data are stored in the `visualizations/` and `network_data/` directories.
+
+## 📢 Notifications
 
 Discord notifications include a neat JSON report:
 ```json
