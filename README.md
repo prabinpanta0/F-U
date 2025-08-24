@@ -2,7 +2,7 @@
 <div align="center">
 
 ```
-46 6f 6c 6c 6f 77 20 79 6f 75            
+    46 6f 6c 6c 6f 77 20 79 6f 75            
 ```
 </div>
 
@@ -15,12 +15,12 @@
 <div align="center">
 
 ```
-┌──────────────────────────────────────────────┐
-│ ✅ Auto-follow your followers                │
-│ ✅ Auto-unfollow those who don't follow back │
-│ ✅ Discord notifications with JSON reports   │
-│ ✅ Scheduled daily checks                    │
-└──────────────────────────────────────────────┘
+        ┌──────────────────────────────────────────────┐
+        │ ✅ Auto-follow your followers                │
+        │ ✅ Auto-unfollow those who don't follow back │
+        │ ✅ Discord notifications with JSON reports   │
+        │ ✅ Scheduled daily checks                    │
+        └──────────────────────────────────────────────┘
 ```
 </div>
 
