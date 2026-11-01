@@ -4,30 +4,60 @@ on:
   schedule:
     - cron: '30 18 * * *'
   workflow_dispatch:  # Allows manual triggering
+    inputs:
+      dry_run:
+        description: 'Log actions without changing anything'
+        type: boolean
+        default: false
+      max_actions:
+        description: 'Max follow/unfollow actions this run (0 = unlimited)'
+        type: string
+        default: '0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: follow-unfollow
+  cancel-in-progress: false
 
 jobs:
   follow-unfollow:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        persist-credentials: false
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests
+        pip install -r requirements.txt
+
+    - name: Restore GitHub API ETag cache
+      uses: actions/cache@v4
+      with:
+        path: .github_api_cache.json
+        key: github-api-cache-${{ github.run_id }}
+        restore-keys: |
+          github-api-cache-
 
     - name: Run follow_unfollow.py
       env:
         TOKEN: ${{ secrets.TOKEN }}
         USERNAME: ${{ secrets.USERNAME }}
         DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        DRY_RUN: ${{ inputs.dry_run || 'false' }}
+        MAX_ACTIONS_PER_RUN: ${{ inputs.max_actions || '0' }}
         # EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
         # EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
       run: python follow_unfollow.py

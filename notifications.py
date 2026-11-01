@@ -1,8 +1,9 @@
-import os
 import requests
 import json
 
-DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL')
+import config
+
+DISCORD_WEBHOOK_URL = config.DISCORD_WEBHOOK_URL
 
 # Track followed and unfollowed users
 followed_users = []
@@ -75,11 +76,15 @@ def _create_summary():
 
 def _post_to_discord(content, embeds=None):
     """Send a message to Discord webhook"""
+    if not DISCORD_WEBHOOK_URL:
+        print("DISCORD_WEBHOOK_URL not set, skipping Discord report.")
+        return False
+
     data = {"content": content}
     if embeds:
         data["embeds"] = embeds
-        
-    response = requests.post(DISCORD_WEBHOOK_URL, json=data)
+
+    response = requests.post(DISCORD_WEBHOOK_URL, json=data, timeout=30)
     
     if response.status_code != 204:
         print(f"Failed to send Discord report. Status code: {response.status_code}")
@@ -114,7 +119,9 @@ def send_follow_report():
     }]
     
     # Send the notification
-    if _post_to_discord(f"Github(prabinpanta0) Report: {summary_text}", embeds):
+    if         _post_to_discord(
+            f"Github({config.GITHUB_USERNAME}) Report: {summary_text}", embeds
+        ):
         _clear_user_lists()
 
 # Added notifications for no one to follow/unfollow

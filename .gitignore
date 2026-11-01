@@ -1,0 +1,5 @@
+.env
+.github_api_cache.json
+.github_api_cache.json.tmp
+__pycache__/
+*.pyc
